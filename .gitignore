@@ -1,0 +1,9 @@
+.DS_Store
+node_modules/
+.env
+.env.*
+*.log
+dist/
+CLAUDE.md
+BRIEF.md
+docs/m0-competitor-notes.md
