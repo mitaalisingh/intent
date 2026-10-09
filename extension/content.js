@@ -1,17 +1,98 @@
-// Runs on every YouTube page. Hides the hooks listed in selectors.js.
+// Runs on every YouTube page. Hides the hooks listed in selectors.js,
+// as much as the chosen level (levels.js) asks for.
 
-// 1. Hide elements with CSS.
-// A stylesheet keeps working when YouTube adds new videos to the page,
-// so we don't need to search the page again and again.
-function addHidingStyles() {
-  const allSelectors = Object.values(HIDE_SELECTORS).flat();
-  const style = document.createElement("style");
-  style.id = "intent-hide";
-  style.textContent = `${allSelectors.join(",\n")} { display: none !important; }`;
-  document.documentElement.appendChild(style);
+let currentLevel = DEFAULT_LEVEL;
+
+// 1. Build the CSS for a level.
+// A stylesheet keeps working when YouTube adds new things to the page.
+function buildCss(level) {
+  const { homeVideos, sidebarVideos } = LEVELS[level];
+  const hide = [...SELECTORS.shorts];
+
+  if (homeVideos === 0) {
+    hide.push(SELECTORS.homeFeed);
+  } else {
+    hide.push(...SELECTORS.homeExtras);
+  }
+
+  if (sidebarVideos === 0) {
+    hide.push(SELECTORS.sidebar);
+  } else {
+    hide.push(...SELECTORS.sidebarExtras);
+  }
+
+  // Videos marked by trimFeeds() below
+  hide.push("[data-intent-hidden]");
+
+  let css = `${hide.join(",\n")} { display: none !important; }`;
+
+  // A clear end to the home page, so it doesn't feel broken
+  if (homeVideos > 0) {
+    css += `
+      ${SELECTORS.homeGrid}::after {
+        content: "That's all for now. Search for what you came for.";
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 48px 0;
+        font-size: 18px;
+        color: var(--yt-spec-text-secondary, #606060);
+      }`;
+  }
+  return css;
 }
 
-// 2. Open Shorts as normal videos.
+// 2. Put the CSS on the page, replacing the old one when the level changes.
+function applyLevel(level) {
+  currentLevel = LEVELS[level] ? level : DEFAULT_LEVEL;
+  let style = document.getElementById("intent-hide");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "intent-hide";
+    document.documentElement.appendChild(style);
+  }
+  style.textContent = buildCss(currentLevel);
+  trimFeeds();
+}
+
+// 3. Very short clips (under 1 minute) are Shorts in spirit.
+// Read the time badge on the thumbnail, like "0:32" or "12:05".
+function isShortClip(video) {
+  for (const badge of video.querySelectorAll(SELECTORS.duration.join(","))) {
+    const parts = badge.textContent.trim().split(":");
+    if (parts.length === 2 && parts[0] === "0") return true;
+  }
+  return false;
+}
+
+// 4. Keep the first few videos, skipping short clips; hide everything else.
+function trimList(selector, keep) {
+  let shown = 0;
+  for (const video of document.querySelectorAll(selector)) {
+    // Skip a match that sits inside another match, so nothing is counted twice
+    if (video.parentElement.closest(selector)) continue;
+    const hide = isShortClip(video) || shown >= keep;
+    if (hide) {
+      video.setAttribute("data-intent-hidden", "");
+    } else {
+      video.removeAttribute("data-intent-hidden");
+      shown++;
+    }
+  }
+}
+
+function trimFeeds() {
+  const { homeVideos, sidebarVideos } = LEVELS[currentLevel];
+  if (homeVideos > 0) trimList(SELECTORS.homeVideo, homeVideos);
+  if (sidebarVideos > 0) trimList(SELECTORS.sidebarVideo.join(","), sidebarVideos);
+}
+
+// 5. Autoplay off, always. If the switch is on, click it off.
+// YouTube listens for clicks on the button around the switch, not the switch itself.
+function turnOffAutoplay() {
+  document.querySelector(SELECTORS.autoplayOn)?.closest("button")?.click();
+}
+
+// 6. Open Shorts as normal videos.
 // If a Shorts link is opened from anywhere, show it on the normal video
 // page instead of the endless swipe player.
 function redirectShorts() {
@@ -21,8 +102,29 @@ function redirectShorts() {
   }
 }
 
-addHidingStyles();
+// Start strict straight away, so the feed never flashes on screen,
+// then switch to the saved level once storage answers.
+applyLevel(DEFAULT_LEVEL);
+chrome.storage.local.get({ level: DEFAULT_LEVEL }).then(({ level }) => applyLevel(level));
+
+// When the level is changed in the popup, update open YouTube tabs at once.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.level) applyLevel(changes.level.newValue);
+});
+
 redirectShorts();
 
 // YouTube changes pages without a full reload, so check again after each move.
 document.addEventListener("yt-navigate-finish", redirectShorts);
+
+// YouTube keeps adding videos and the player after the page loads.
+// Watch for new elements, and re-check at most every 200 ms.
+let pending = null;
+new MutationObserver(() => {
+  if (pending) return;
+  pending = setTimeout(() => {
+    pending = null;
+    trimFeeds();
+    turnOffAutoplay();
+  }, 200);
+}).observe(document.documentElement, { childList: true, subtree: true });
