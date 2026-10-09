@@ -80,3 +80,8 @@ Mitaali's main language is Python. A Chrome extension must be JavaScript or Type
 - **Backend (Python, likely FastAPI):** ranking, AI model calls, evaluation against the hand-labeled set. API keys live only here.
 - M1 (hide Shorts and the feed) needs no backend.
 - Open: where the backend runs for people other than Mitaali (hosting). Decide after v1.
+
+## 2026-10-09 — M1 hides with CSS, and Shorts links open as normal videos
+- Hiding uses one injected stylesheet built from `extension/selectors.js`, not code that deletes elements. YouTube keeps adding videos as you scroll; a stylesheet covers new ones automatically and is simpler to fix when YouTube changes.
+- A Shorts link (for example one shared by a friend) opens on the normal video page instead of the swipe player. The video itself may be useful; the endless swipe is the hook.
+- Known weak spot: the left-menu Shorts link is matched by its English label, so it may stay visible if YouTube is set to another language.
