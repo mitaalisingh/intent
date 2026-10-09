@@ -85,3 +85,29 @@ Mitaali's main language is Python. A Chrome extension must be JavaScript or Type
 - Hiding uses one injected stylesheet built from `extension/selectors.js`, not code that deletes elements. YouTube keeps adding videos as you scroll; a stylesheet covers new ones automatically and is simpler to fix when YouTube changes.
 - A Shorts link (for example one shared by a friend) opens on the normal video page instead of the swipe player. The video itself may be useful; the endless swipe is the hook.
 - Known weak spot: the left-menu Shorts link is matched by its English label, so it may stay visible if YouTube is set to another language.
+
+## 2026-10-09 — The dial before M2: Soft and Medium trim YouTube's own feed for now
+Soft and Medium are meant to show *ranked* picks. Ranking comes in M2–M3, so for now they show the first few videos of YouTube's own feed (Soft 12, Medium 6 on home; 5 and 3 in the sidebar), with no topic chips, no shelves and no endless scroll, and a clear "That's all for now" at the end.
+Reason: the dial is the base every later feature reads (feed size now, reminder frequency in the intent check), so it is built first. The finite feed already removes the infinite-scroll hook, even before ranking.
+- Default level is **Hard**: the safest default, and it matches what was tested in M1.
+- The numbers are a first guess, kept in `extension/levels.js`, to adjust after use.
+- Weak spot: the "first N videos" trick depends on how YouTube lays out the grid. If YouTube groups videos into rows, the count will be off.
+
+## 2026-10-10 — What counts as harmful: decided from research
+Question: which videos and features should Intent hide, and which should it only rank lower? Looked at the research before deciding.
+
+**Strong evidence → hide:**
+- **Short-form video.** A 2025 meta-analysis (71 studies, ~98,000 people, *Psychological Bulletin*) linked more short-form video use with weaker attention (r = −0.38) and inhibitory control (r = −0.41). Mostly cross-sectional, so a link, not proven cause.
+- **Rapid switching between clips.** Chiossi et al. (CHI 2023): a TikTok-style feed hurt people's ability to remember and act on an intention; normal YouTube videos and Twitter did not. The harm comes from many short clips in a row, not from one short video.
+- **Recommendations and autoplay.** Lukoff et al. (CHI 2021): these made YouTube users feel less in control of their time.
+
+**Weaker or indirect evidence → use for ranking only (M3/M4), not hiding:**
+- **Fast pacing.** Lillard & Peterson (2011): 9 minutes of a fast-paced cartoon hurt 4-year-olds' self-control straight after. Only young children; no strong adult evidence.
+- **Clickbait.** Common on YouTube, and YouTube's recommendations did not account for it (Zannettou et al., 2018). Studies find clickbait lowers trust in the source and leaves people feeling let down when the content doesn't deliver, but one experiment found no effect on trust or learning. It works against "do what you came to do", but is not shown to harm attention directly.
+
+**Changes made from this:**
+- **Autoplay is off at every level.** If the switch is on, Intent clicks it off.
+- **Clips under 1 minute are hidden in the home feed and sidebar**, where they chain one after another. **They stay in search results**: if the user searched for it, it is on purpose.
+- Because of this, "keep the first N videos" moved from CSS into JavaScript, so short clips don't use up the N slots.
+
+Weak spot: short clips are found by reading the time badge on the thumbnail ("0:32"). If YouTube changes the badge, they will show again. Live videos have no time and are not affected.
