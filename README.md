@@ -2,7 +2,7 @@
 
 **A calmer YouTube that helps you do what you came to do.**
 
-> **Status: early stage.** Research and design are done and the first milestone is starting. There is no working extension yet. This README describes what Intent is being built to do, and the docs show the thinking so far.
+> **Status: early stage.** Research and design are done and the first milestone is starting. There is no working extension yet. This README describes what Intent is being built to do.
 
 ## Why I'm building this
 
