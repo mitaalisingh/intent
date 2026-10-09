@@ -20,7 +20,7 @@ Starting design (to refine):
 - **Strict:** empty home, search only, no sidebar recommendations.
 - **Gentle:** a small, finite home page of ranked picks (including underrated videos) with a clear end, and a short ranked sidebar instead of an endless one.
 - Shorts are off in both.
-Open question: what "finite" means (for example 5 picks a day) and how the attention ladder (BRIEF section 8) works with each mode.
+Open question: what "finite" means (for example 5 picks a day) and how the attention-training ladder works with each mode.
 
 ## 2026-10-09 — A minimal intent check moves into v1 (from "Later")
 Mitaali wants Intent to actually ask: the user states what they are here for (for example "placement prep"). If they later search something that clearly does not match (for example "kdrama"), a soft pop-up asks: "That doesn't sound like placement prep. Are you on a break?"
@@ -34,7 +34,7 @@ Open questions: break timer length; how the match is judged (a small LLM call ve
 
 ## 2026-10-09 — Intent can be a goal, not only a topic
 Examples: "placement prep" (a topic) or "improve my attention span" (a goal).
-- With a goal like "improve my attention span," the feed gradually shifts toward long-form, good-quality videos, a step at a time (this is the attention ladder, BRIEF section 8). Mitaali's framing: it is still the user's own feed, they just could not see the good videos under all the clickbait.
+- With a goal like "improve my attention span," the feed gradually shifts toward long-form, good-quality videos, a step at a time (this is the attention-training ladder). Mitaali's framing: it is still the user's own feed, they just could not see the good videos under all the clickbait.
 - Caveat: long does not mean good. Long-form can also be filler or clickbait, so ranking by quality still applies.
 - Caveat: finding those videos needs a source of candidates (subscriptions, the user's interests, search through the YouTube API). We cannot read YouTube's own feed. This is the hardest technical part; prototype it before promising it.
 
@@ -67,3 +67,16 @@ What we can and cannot do:
 - A safer layer for Hard level and for less technical users: an **allowlist**, so only videos from approved channels show. This does not depend on detecting anything.
 - Wording: never claim "blocks all AI videos." Say "hides videos YouTube labels as AI-generated, and can limit YouTube to trusted channels."
 - Because older users are a target, the product must be simple: large text, plain words, safe defaults, and no setup that needs technical knowledge.
+
+## 2026-10-09 — Principle: discovery, not only blocking
+From early testing of existing tools: if the goal is a slower life and a better attention span, hard blocking is not always what people want. They should get a chance to choose, including underrated videos for what they typed.
+- At Soft (and in the Next list), the tool should offer real discovery of what the user searched for, not only hide things.
+- New ideas (Discover, De-influence, 2005 theme, soft-on-the-eyes theme, Work vs Unwind sessions) are recorded in `ROADMAP.md` under Next. Not in v1.
+- Possible way to organize them later: a shared core with switchable "lenses" (Focus, Discover, De-influence, 2005). Proposed only; decide after v1.
+
+## 2026-10-09 — Tech split: JavaScript extension + Python backend
+Mitaali's main language is Python. A Chrome extension must be JavaScript or TypeScript, so:
+- **Extension (JavaScript):** hiding elements, popup UI, level dial, reminders. Keep it small and simple.
+- **Backend (Python, likely FastAPI):** ranking, AI model calls, evaluation against the hand-labeled set. API keys live only here.
+- M1 (hide Shorts and the feed) needs no backend.
+- Open: where the backend runs for people other than Mitaali (hosting). Decide after v1.
