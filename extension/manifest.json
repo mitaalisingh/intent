@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Intent",
+  "version": "0.1.0",
+  "description": "A calmer YouTube that helps you do what you came to do.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["selectors.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
