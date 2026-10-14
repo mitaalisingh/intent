@@ -1,17 +1,19 @@
 {
   "manifest_version": 3,
   "name": "Intent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A calmer YouTube that helps you do what you came to do.",
   "permissions": ["storage"],
   "action": {
-    "default_title": "Intent",
-    "default_popup": "popup.html"
+    "default_title": "Intent"
+  },
+  "background": {
+    "service_worker": "background.js"
   },
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/*"],
-      "js": ["levels.js", "selectors.js", "content.js"],
+      "js": ["levels.js", "selectors.js", "prompt.js", "content.js"],
       "run_at": "document_start"
     }
   ]
