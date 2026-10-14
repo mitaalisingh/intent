@@ -1,7 +1,15 @@
 // Runs on every YouTube page. Hides the hooks listed in selectors.js,
 // as much as the chosen level (levels.js) asks for.
+// While an intent session is running (see prompt.js), YouTube follows it:
+// the home page opens the search for your intent, and the results stay short.
 
 let currentLevel = DEFAULT_LEVEL;
+let session = { intent: "", active: false };
+
+// Is a session running with an intent?
+function sessionOn() {
+  return session.active && session.intent !== "";
+}
 
 // 1. Build the CSS for a level.
 // A stylesheet keeps working when YouTube adds new things to the page.
@@ -21,6 +29,9 @@ function buildCss(level) {
     hide.push(...SELECTORS.sidebarExtras);
   }
 
+  // Ads, carousels and "load more" in the search results, during a session
+  if (sessionOn()) hide.push(...SELECTORS.searchExtras);
+
   // Videos marked by trimFeeds() below
   hide.push("[data-intent-hidden]");
 
@@ -32,6 +43,19 @@ function buildCss(level) {
       ${SELECTORS.homeGrid}::after {
         content: "That's all for now. Search for what you came for.";
         grid-column: 1 / -1;
+        text-align: center;
+        padding: 48px 0;
+        font-size: 18px;
+        color: var(--yt-spec-text-secondary, #606060);
+      }`;
+  }
+
+  // The same clear end under the search results
+  if (sessionOn()) {
+    css += `
+      ${SELECTORS.searchList}::after {
+        content: "That's all for now. Search for what you came for.";
+        display: block;
         text-align: center;
         padding: 48px 0;
         font-size: 18px;
@@ -81,9 +105,11 @@ function trimList(selector, keep) {
 }
 
 function trimFeeds() {
-  const { homeVideos, sidebarVideos } = LEVELS[currentLevel];
+  const { homeVideos, sidebarVideos, resultVideos } = LEVELS[currentLevel];
   if (homeVideos > 0) trimList(SELECTORS.homeVideo, homeVideos);
   if (sidebarVideos > 0) trimList(SELECTORS.sidebarVideo.join(","), sidebarVideos);
+  // Each selector only matches on its own page, so this only trims search results
+  if (sessionOn()) trimList(SELECTORS.searchVideo, resultVideos);
 }
 
 // 5. Autoplay off, always. If the switch is on, click it off.
@@ -102,20 +128,40 @@ function redirectShorts() {
   }
 }
 
-// Start strict straight away, so the feed never flashes on screen,
-// then switch to the saved level once storage answers.
-applyLevel(DEFAULT_LEVEL);
-chrome.storage.local.get({ level: DEFAULT_LEVEL }).then(({ level }) => applyLevel(level));
+// 7. With a session running, the home page becomes the search for your intent.
+function openIntentFeed() {
+  if (!sessionOn() || location.pathname !== "/") return;
+  location.replace(`/results?search_query=${encodeURIComponent(session.intent)}`);
+}
 
-// When the level is changed in the popup, update open YouTube tabs at once.
+// Start strict straight away, so the feed never flashes on screen,
+// then switch to the saved level and session once storage answers.
+applyLevel(DEFAULT_LEVEL);
+chrome.storage.local
+  .get({ level: DEFAULT_LEVEL, intent: "", active: false })
+  .then((saved) => {
+    session = { intent: saved.intent, active: saved.active };
+    applyLevel(saved.level);
+    openIntentFeed();
+  });
+
+// When the level or the intent changes (see prompt.js), update open YouTube tabs at once.
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.level) applyLevel(changes.level.newValue);
+  if (area !== "local") return;
+  if (changes.intent) session.intent = changes.intent.newValue ?? "";
+  if (changes.active) session.active = changes.active.newValue ?? false;
+  applyLevel(changes.level ? changes.level.newValue : currentLevel);
+  openIntentFeed();
 });
 
 redirectShorts();
 
 // YouTube changes pages without a full reload, so check again after each move.
-document.addEventListener("yt-navigate-finish", redirectShorts);
+document.addEventListener("yt-navigate-finish", () => {
+  redirectShorts();
+  openIntentFeed();
+  trimFeeds();
+});
 
 // YouTube keeps adding videos and the player after the page loads.
 // Watch for new elements, and re-check at most every 200 ms.

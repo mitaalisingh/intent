@@ -1,7 +1,7 @@
 // Every YouTube element Intent hides, in one place.
 // YouTube changes its page structure often. When something stops being
 // hidden, inspect the element in Chrome DevTools and update this list.
-// Last checked: 2026-10-09.
+// Last checked: 2026-10-13 (search results added).
 
 const SELECTORS = {
   // Hidden at every level
@@ -47,6 +47,19 @@ const SELECTORS = {
     "ytd-watch-flexy #related yt-related-chip-cloud-renderer",
     // The spinner that loads more
     "ytd-watch-flexy #related ytd-continuation-item-renderer",
+  ],
+
+  // Search results page (only trimmed while an intent session is running)
+  searchVideo: "ytd-search ytd-video-renderer",
+  searchList: "ytd-search ytd-item-section-renderer #contents",
+  searchExtras: [
+    // Ads
+    "ytd-search ytd-search-pyv-renderer",
+    "ytd-search ytd-ad-slot-renderer",
+    // "Key moments" carousels
+    "ytd-search ytd-horizontal-card-list-renderer",
+    // The spinner that loads more results as you scroll
+    "ytd-search ytd-continuation-item-renderer",
   ],
 
   // The time badge on a thumbnail ("12:34"), used to find very short clips
