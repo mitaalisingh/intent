@@ -6,9 +6,7 @@
 
 ## Why I'm building this
 
-I use YouTube for tutorials. I also lose time to it: "I might not see this again" turns one video into ten. Reddit and Pinterest do the same, and I need all three for work. Total blockers don't help, because they block the useful part too.
-
-I also remember when I didn't use social media much. Life felt slower and I noticed more. Then everyone around me seemed to know everything quickly, and I felt I had to keep up. Intent is my attempt to keep what's useful and remove the hook.
+I use YouTube for tutorials. I also lose time to it: "I might not see this again" turns one video into ten. Reddit and Pinterest do the same, and I need all three for work. Total blockers don't help, because they block the useful part too. Intent is my attempt to keep what's useful and remove the hook.
 
 ## What Intent will do
 
