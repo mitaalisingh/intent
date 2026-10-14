@@ -129,8 +129,17 @@ function redirectShorts() {
 }
 
 // 7. With a session running, the home page becomes the search for your intent.
+// But only for a topic, like "placement prep". A goal is about you, like "I want
+// to increase my attention span". Searching for it would just show videos about
+// the goal, so a goal leaves the home page alone.
+const GOAL_PATTERN = /\b(attention|focus|concentrat\w*|distract\w*|procrastinat\w*|discipline|habit|addict\w*|i want|i need|i have been|i'?m trying)\b/i;
+
+function isGoal(intent) {
+  return GOAL_PATTERN.test(intent);
+}
+
 function openIntentFeed() {
-  if (!sessionOn() || location.pathname !== "/") return;
+  if (!sessionOn() || isGoal(session.intent) || location.pathname !== "/") return;
   location.replace(`/results?search_query=${encodeURIComponent(session.intent)}`);
 }
 
